@@ -1,7 +1,8 @@
 import discord
+import yaml
 
-with open('.token', 'r') as f:
-    TOKEN = f.read().strip()
+with open('env.yaml', 'r') as f:
+    config = yaml.safe_load(f)
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -17,4 +18,4 @@ async def on_message(message):
     if isinstance(message.channel, discord.DMChannel) and message.author != bot.user:
         await message.channel.send("hi")
 
-bot.run(TOKEN)
+bot.run(config['discord_token'])
