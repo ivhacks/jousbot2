@@ -45,15 +45,65 @@ def clone_repository(repo_name: str) -> str:
     # Construct the HTTPS URL with token auth
     https_url = f"https://{config['github_token']}@github.com/{repo_name}.git"
 
-    # Change to temp directory first
-    os.chdir(temp_dir)
-    result = subprocess.run(["git", "clone", https_url], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "clone", https_url], cwd=temp_dir, capture_output=True, text=True
+    )
 
     if result.returncode != 0:
         raise Exception(f"Failed to clone repository: {result.stderr}")
 
     # Repo will be a subdir of the temp dir
     return os.path.join(temp_dir, repo_name.split("/")[-1])
+
+
+def _git_config(repo_path: str):
+    """Set git user.name and user.email for this specific repository."""
+    subprocess.run(
+        ["git", "config", "--local", "user.name", config["git_name"]],
+        cwd=repo_path,
+        check=True,
+    )
+
+    subprocess.run(
+        ["git", "config", "--local", "user.email", config["git_email"]],
+        cwd=repo_path,
+        check=True,
+    )
+
+
+def git_add(repo_path: str, files: list[str]):
+    """Add files to git staging area."""
+    if not files:
+        return
+
+    result = subprocess.run(
+        ["git", "add"] + files, cwd=repo_path, capture_output=True, text=True
+    )
+
+    if result.returncode != 0:
+        raise Exception(f"Failed to add files: {result.stderr}")
+
+
+def git_commit_and_push(repo_path: str, commit_message: str):
+    """Commit changes and push to remote."""
+    _git_config(repo_path)
+
+    result = subprocess.run(
+        ["git", "commit", "-m", commit_message],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        raise Exception(f"Failed to commit changes: {result.stderr}")
+
+    result = subprocess.run(
+        ["git", "push"], cwd=repo_path, capture_output=True, text=True
+    )
+
+    if result.returncode != 0:
+        raise Exception(f"Failed to push changes: {result.stderr}")
 
 
 if __name__ == "__main__":
