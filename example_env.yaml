@@ -1,0 +1,7 @@
+discord_token: "MTEyMzQ1Njc4OTAxMjM0NTY3.GfGhIj.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+github_token: "ghp_1234567890abcdefghijklmnopqrstuvwxyzABCD"
+github_username: "example_user"
+git_name: "example_bot"
+git_email: "example_bot@example.com"
+your_discord_user_id: "123456789012345678"
+openai_api_key: "sk-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" 
