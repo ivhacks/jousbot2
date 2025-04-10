@@ -10,19 +10,14 @@ HEADERS = {
 }
 
 
-def create_repository(name: str, description: str):
+def create_repository(name: str, description: str) -> int:
     response = requests.post(
         "https://api.github.com/user/repos",
         headers=HEADERS,
         json={"name": name, "description": description, "private": True},
     )
 
-    if response.status_code == 201:
-        return
-    else:
-        raise Exception(
-            f"Failed to create repository. Status code: {response.status_code}. Error: {response.json()}"
-        )
+    return response.status_code
 
 
 def delete_repository(name: str):

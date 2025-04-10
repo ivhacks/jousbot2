@@ -1,6 +1,8 @@
 import discord
 from config import config
 import openai
+from github import create_repository
+import json
 
 PROMPT = (
     "You are a very silly Discord bot. Make sure your responses are brief. Try to have them be about the same length as the user's message, ESPECIALLY for short messages. "
@@ -29,6 +31,32 @@ PROMPT = (
     "Reason it's good: absolutely fucking unhinged and hilarious"
 )
 
+create_repo_tool_spec = {
+    "type": "function",
+    "function": {
+        "name": "create_repository",
+        "description": "Creates a new repository on GitHub.",
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "required": ["name", "description"],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the repository to create",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "The description of the repository to create",
+                },
+            },
+            "additionalProperties": False,
+        },
+    },
+}
+
+TOOLS = [create_repo_tool_spec]
+
 # Set up OpenAI API
 openai_client = openai.OpenAI(api_key=config["openai_api_key"])
 
@@ -54,10 +82,31 @@ async def on_message(message):
                         {"role": "system", "content": PROMPT},
                         {"role": "user", "content": message.content},
                     ],
+                    tools=TOOLS,
                 )
-                await message.channel.send(response.choices[0].message.content)
+
+                # Was a tool call requested?
+                if response.choices[0].message.tool_calls != None:
+                    for tool_call in response.choices[0].message.tool_calls:
+                        if tool_call.function.name == "create_repository":
+                            tool_result = create_repository(
+                                json.loads(tool_call.function.arguments)["name"],
+                                json.loads(tool_call.function.arguments)["description"],
+                            )
+                            function_call_result_message = {
+                                "role": "tool",
+                                "content": tool_result,
+                                "tool_call_id": tool_call.id,
+                            }
+                            await message.channel.send(
+                                str(function_call_result_message)
+                            )
+                else:
+                    # No tool call requested, just send the response
+                    await message.channel.send(response.choices[0].message.content)
             except Exception as e:
                 await message.channel.send(f"Sorry, I encountered an error: {str(e)}")
+                raise e
         else:
             await message.channel.send("i have a girlfriend pls get out of my dms")
 
