@@ -1,5 +1,8 @@
 from config import config
 import requests
+import subprocess
+import tempfile
+import os
 
 HEADERS = {
     "Authorization": f'token {config["github_token"]}',
@@ -36,5 +39,25 @@ def delete_repository(name: str):
         )
 
 
-# create_repository("balls", "Created via GitHub API")
-delete_repository("balls")
+def clone_repository(repo_name: str) -> str:
+    temp_dir = tempfile.mkdtemp()
+
+    # Construct the HTTPS URL with token auth
+    https_url = f"https://{config['github_token']}@github.com/{repo_name}.git"
+
+    # Change to temp directory first
+    os.chdir(temp_dir)
+    result = subprocess.run(["git", "clone", https_url], capture_output=True, text=True)
+
+    if result.returncode != 0:
+        raise Exception(f"Failed to clone repository: {result.stderr}")
+
+    # Repo will be a subdir of the temp dir
+    return os.path.join(temp_dir, repo_name.split("/")[-1])
+
+
+if __name__ == "__main__":
+    # create_repository("balls", "Created via GitHub API")
+    # delete_repository("balls")
+    repo_path = clone_repository("ivhacks/jousbot2")
+    print(f"Cloned repository to: {repo_path}")
