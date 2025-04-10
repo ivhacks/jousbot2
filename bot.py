@@ -1,8 +1,5 @@
 import discord
-import yaml
-
-with open('env.yaml', 'r') as f:
-    config = yaml.safe_load(f)
+from config import config
 
 intents = discord.Intents.default()
 intents.message_content = True
